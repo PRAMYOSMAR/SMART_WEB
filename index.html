@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRAMYOSMAR - Digital App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --prm: #00695C; --bg: #F8F9FA; --pink: #E91E63; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); padding-bottom: 100px; }
+
+        /* HEADER ANTI-NUMPUK */
+        .app-header { 
+            background: white; padding: 15px 15px 50px; border-radius: 0 0 40px 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05); position: relative; gap: 8px;
+        }
+        .header-brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .logo-ambalan { width: 42px; height: 42px; object-fit: cover; border-radius: 10px; border: 2px solid var(--prm); flex-shrink: 0; }
+        .header-brand h1 { font-size: clamp(16px, 4vw, 20px); margin: 0; font-weight: 800; color: var(--prm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Area Nama Akun Kanan (Fleksibel) */
+        .header-user-right { text-align: right; flex-shrink: 0; max-width: 45%; }
+        .user-name-box { background: #E0F2F1; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(0,105,92,0.1); display: inline-block; width: 100%; }
+        .user-name-big { 
+            font-size: clamp(11px, 3vw, 14px); font-weight: 800; color: var(--prm); 
+            margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            display: block;
+        }
+        .user-status-text { font-size: 8px; color: #7f8c8d; font-weight: 700; text-transform: uppercase; display: block; margin-top: 2px; }
+
+        /* CAROUSEL */
+        .carousel-wrapper { margin-top: -30px; padding: 0 15px; }
+        .carousel-inner { width: 100%; height: clamp(150px, 45vw, 200px); border-radius: 25px; overflow: hidden; position: relative; background: #222; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+        .slider-track { display: flex; height: 100%; transition: 0.8s ease; }
+        .slide { flex: 0 0 100%; height: 100%; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* MENU GRID */
+        .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); padding: 25px 15px; gap: 8px; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; }
+        .menu-icon { width: clamp(45px, 11vw, 55px); height: clamp(45px, 11vw, 55px); background: var(--prm); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; margin-bottom: 5px; }
+        .menu-item span { font-size: 9px; font-weight: 800; color: var(--prm); line-height: 1.1; }
+
+        /* LIST & CARDS */
+        .card-item { background: white; border-radius: 20px; padding: 10px; margin-bottom: 10px; border: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: center; }
+        .card-img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; }
+
+        /* NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; height: 80px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -8px 25px rgba(0,0,0,0.05); border-radius: 25px 25px 0 0; z-index: 1000; }
+        .nav-link { text-align: center; color: #B2BEC3; text-decoration: none; flex: 1; font-size: 10px; font-weight: 800; cursor: pointer; }
+        .nav-link.active { color: var(--prm); }
+        .nav-link i { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        .page { display: none; padding-bottom: 100px; animation: fadeInUp 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        #authSection { position: fixed; inset: 0; background: linear-gradient(135deg, var(--prm), #004D40); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-card { background: white; width: 85%; max-width: 340px; padding: 35px 25px; border-radius: 35px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="authSection">
+        <div class="login-card">
+            <img src="pramyos.jpeg" style="width:70px; border-radius:15px; margin-bottom:15px; border:2px solid var(--prm);">
+            <h2 style="color:var(--prm); margin:0; font-size: 20px;">PRAMYOSMAR</h2>
+            <p style="font-size:11px; color:#666; margin-bottom:25px;">Masukkan Nama Lengkap Anda</p>
+            <input type="text" id="user" placeholder="Nama Lengkap" style="width:100%; padding:14px; border-radius:15px; border:1px solid #eee; outline:none; margin-bottom:15px; text-align: center; font-family: inherit;">
+            <button onclick="login()" style="width:100%; padding:14px; background:var(--prm); color:white; border:none; border-radius:15px; font-weight:800; cursor:pointer;">MASUK</button>
+        </div>
+    </div>
+
+    <div id="pHome" class="page active">
+        <div class="app-header">
+            <div class="header-brand">
+                <img src="pramyos.jpeg" class="logo-ambalan">
+                <h1>PRAMYOSMAR</h1>
+            </div>
+            <div class="header-user-right">
+                <div class="user-name-box">
+                    <p id="topUserName" class="user-name-big">Guest</p>
+                </div>
+                <span class="user-status-text">Anggota</span>
+            </div>
+        </div>
+
+        <div class="carousel-wrapper">
+            <div class="carousel-inner"><div class="slider-track" id="slider"></div></div>
+        </div>
+        
+        <div class="menu-grid">
+            <div class="menu-item" onclick="show('pAnggota')"><div class="menu-icon"><i class="fa-solid fa-users"></i></div><span>Anggota</span></div>
+            <div class="menu-item" onclick="show('pBerita')"><div class="menu-icon"><i class="fa-solid fa-camera-retro"></i></div><span>Kegiatan</span></div>
+            <div class="menu-item" onclick="show('pMateri')"><div class="menu-icon"><i class="fa-solid fa-book"></i></div><span>Materi</span></div>
+            <div class="menu-item" onclick="show('pUjian')"><div class="menu-icon"><i class="fa-solid fa-file-signature"></i></div><span>Ujian</span></div>
+        </div>
+
+        <div style="padding: 10px 20px 0;"><h2 style="font-size:15px; margin:0; color:var(--prm);">Kegiatan Terbaru</h2></div>
+        <div id="latestNews" style="padding: 10px 15px 100px;"></div>
+    </div>
+
+    <div id="pPesan" class="page">
+        <div class="app-header"><h1>Media Sosial</h1></div>
+        <div style="padding: 30px 20px;">
+            <a href="https://instagram.com/pramyosmar_bumimoro" target="_blank" class="social-link bg-ig" style="background:linear-gradient(45deg,#f09433,#bc1888); padding:18px; border-radius:20px; color:white; display:flex; align-items:center; gap:15px; text-decoration:none; margin-bottom:12px; font-weight:800;"><i class="fa-brands fa-instagram fa-2x"></i>Instagram</a>
+            <a href="https://tiktok.com/@pramyosmar7" target="_blank" class="social-link bg-tk" style="background:#000; padding:18px; border-radius:20px; color:white; display:flex; align-items:center; gap:15px; text-decoration:none; font-weight:800;"><i class="fa-brands fa-tiktok fa-2x"></i>TikTok</a>
+        </div>
+    </div>
+
+    <div id="pAnggota" class="page"><div class="app-header"><h1>Anggota</h1></div><div id="listAg" style="padding:15px;"></div></div>
+    <div id="pBerita" class="page"><div class="app-header"><h1>Kegiatan</h1></div><div id="listBr" style="padding:15px;"></div></div>
+    <div id="pMateri" class="page"><div class="app-header"><h1>Materi</h1></div><div id="listMt" style="padding:15px;"></div></div>
+    <div id="pUjian" class="page"><div class="app-header"><h1>Ujian CAT</h1></div><div id="listUj" style="padding:20px; text-align:center;"></div></div>
+
+    <nav class="bottom-nav">
+        <div class="nav-link active" onclick="show('pHome', this)"><i class="fa-solid fa-house"></i><span>Beranda</span></div>
+        <div class="nav-link" onclick="show('pPesan', this)"><i class="fa-solid fa-message"></i><span>Pesan</span></div>
+        <div class="nav-link" onclick="logout()"><i class="fa-solid fa-power-off"></i><span>Logout</span></div>
+    </nav>
+
+    <script>
+        const SUPABASE_URL = 'https://nuzxkanvloxcgxzcixoc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51enhrYW52bG94Y2d4emNpeG9jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMjg0MCwiZXhwIjoyMDgyNjc4ODQwfQ.n9FGB2gxZun3mDw22ulit19jKtI95i9dqwH21175PZE';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let sIdx = 0;
+
+        window.onload = () => {
+            const saved = localStorage.getItem('pramyos_user');
+            if(saved) { document.getElementById('authSection').style.display='none'; document.getElementById('topUserName').innerText=saved; load(); }
+        };
+
+        function show(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el) el.classList.add('active');
+        }
+
+        function login() { 
+            const u = document.getElementById('user').value.trim();
+            if(u === "") { alert("Nama wajib diisi!"); return; }
+            localStorage.setItem('pramyos_user', u);
+            document.getElementById('topUserName').innerText = u;
+            document.getElementById('authSection').style.transform = 'translateY(-100%)'; 
+            load(); 
+        }
+
+        function logout() { localStorage.removeItem('pramyos_user'); location.reload(); }
+
+        async function load() {
+            const { data: kg } = await _supabase.from('kegiatan').select('*').order('created_at', {ascending:false});
+            if(kg) {
+                const s = document.getElementById('slider');
+                s.innerHTML = kg.slice(0, 5).map(i => `<div class="slide"><img src="${i.foto_url}"></div>`).join('');
+                setInterval(() => { sIdx = (sIdx + 1) % Math.min(kg.length, 5); s.style.transform = `translateX(-${sIdx * 100}%)`; }, 5000);
+                
+                const html = kg.map(i => `<div class="card-item"><img src="${i.foto_url}" class="card-img"><div style="flex:1;"><h3 style="font-size:12px; margin:0; color:var(--prm);">${i.judul_kegiatan}</h3><p style="font-size:9px; color:#999; margin-top:3px;">${new Date(i.created_at).toLocaleDateString()}</p></div></div>`).join('');
+                document.getElementById('latestNews').innerHTML = html;
+                document.getElementById('listBr').innerHTML = html;
+            }
+            const { data: ag } = await _supabase.from('anggota').select('*');
+            if(ag) { document.getElementById('listAg').innerHTML = ag.map(i => `<div class="card-item"><img src="${i.foto_url}" class="card-img"><div><h3 style="font-size:12px; margin:0; color:var(--prm);">${i.nama}</h3><p style="font-size:9px; color:#999;">${i.jabatan}</p></div></div>`).join(''); }
+            
+            const { data: uj } = await _supabase.from('ujian').select('*');
+            if(uj && uj.length > 0) {
+                document.getElementById('listUj').innerHTML = uj.map(u => `<div class="card-item" style="display:block; text-align:left;"><h3>${u.nama_ujian}</h3><button onclick="window.location.href='${u.link_ujian}'" style="width:100%; padding:10px; background:var(--prm); color:white; border:none; border-radius:10px; font-weight:800;">MULAI</button></div>`).join('');
+            } else {
+                document.getElementById('listUj').innerHTML = `<h3>Tidak Ada Ujian Aktif</h3>`;
+            }
+        }
+    </script>
+</body>
+</html>
